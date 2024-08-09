@@ -1,0 +1,35 @@
+import socket
+
+def udp_server(host, port):
+    # Create a UDP socket
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    cmd = 1
+
+    # Bind the socket to a specific address and port
+    server_socket.bind((host, port))
+    print(f"UDP server listening on {host}:{port}")
+
+    while True:
+        # Receive data from the client
+        data, client_address = server_socket.recvfrom(1024)
+        print(f"Received data from {client_address}: {data}")
+
+        while cmd:
+            cmd = int(input("Please enter cmd:-\n1 - send message\n2 - skip turn\n"))
+            if cmd == 1:
+                # Send a response back to the client
+                #response_message = "Hello, client! I received your message."
+                #response_message = b'\x16\x00\x98\xba\x7f\x00\xa5\xaa\x00\xe6S\x99e\x01\x00\x01\x01\x01\x01\x81\x80\x04\xc9\x80\x01\x01\xf7\xba\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00fW\xda\x01'
+                #server_socket.sendto(response_message, client_address)
+                with open("/home/xdlinx/B200_IQ_SAMPLES/FlatSat_Test/TCP_IP.dat", 'rb') as fi:
+                    read_bytes = fi.read()
+                server_socket.sendto(read_bytes, client_address)
+                print(f"\nResponse back:- {read_bytes}\n")
+
+if __name__ == "__main__":
+    # Change these values to your desired host and port
+    server_host = "127.0.0.2"
+    server_port = 12345
+
+    udp_server(server_host, server_port)
