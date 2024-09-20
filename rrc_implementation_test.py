@@ -124,9 +124,11 @@ def rrc_filtering(taps, I, Q, mod_type):
     return I_list, Q_list
 
 
-def rrc_imp(mod_type, sps, taps, in_IQ_file, out_IQ_file, out_IQ_gay_file, filter_times):
+def rrc_imp(mod_type, const_sel, sps, taps, in_IQ_file, out_IQ_file, out_IQ_gay_file, filter_times, mod_IQ_file):
     num_delay = taps.size-1
     num_taps = int(((taps.size-1)/2 + 1))
+    const_sel = 0
+    print(f"Selected Constellation Model No :- {const_sel}")
     print(f"num_delay={num_delay}\tnum_taps={num_taps}")
     
     # Read I and Q from input IQ file
@@ -150,36 +152,36 @@ def rrc_imp(mod_type, sps, taps, in_IQ_file, out_IQ_file, out_IQ_gay_file, filte
         in_Q = np.array([mod(input_uint8[x]) for x in range(input_uint8.size) if x % 2 == 1])
     elif mod_type == 2:
         sym_str = lambda x: ''.join(str(i) for i in x)
+        sym_dict0 = {'000': (1, 0),
+                     '100': (0.707, 0.707),
+                     '101': (0, 1),
+                     '001': (-0.707, 0.707),
+                     '011': (-1, 0),
+                     '111': (-0.707, -0.707),
+                     '110': (0, -1),
+                     '010': (0.707, -0.707)
+                     }
+        sym_dict1 = {'000': (0.92, 0.38),
+                     '100': (0.38, 0.92),
+                     '101': (-0.38, 0.92),
+                     '001': (-0.92, 0.38),
+                     '011': (-0.92, -0.38),
+                     '111': (-0.38, -0.92),
+                     '110': (0.38, -0.92),
+                     '010': (0.92, -0.38)
+                     }
+
         sym = [sym_str(input_uint8[i:i + 3]) for i in range(0, input_uint8.size, 3)]
         in_I = []
         in_Q = []
         for s in sym:
-            if s == '000':
-                in_I += [1 / np.sqrt(2)]
-                in_Q += [1 / np.sqrt(2)]
-            elif s == '001':
-                in_I += [0]
-                in_Q += [1 / np.sqrt(2)]
-            elif s == '011':
-                in_I += [-1 / np.sqrt(2)]
-                in_Q += [1 / np.sqrt(2)]
-            elif s == '010':
-                in_I += [-1 / np.sqrt(2)]
-                in_Q += [0]
-            elif s == '110':
-                in_I += [-1 / np.sqrt(2)]
-                in_Q += [-1 / np.sqrt(2)]
-            elif s == '111':
-                in_I += [0]
-                in_Q += [-1 / np.sqrt(2)]
-            elif s == '101':
-                in_I += [1 / np.sqrt(2)]
-                in_Q += [-1 / np.sqrt(2)]
-            elif s == '100':
-                in_I += [1 / np.sqrt(2)]
-                in_Q += [0]
-            else:
-                print(f"Nani??? There is another hidden combination?\t\t{s}")
+            if const_sel == 0:
+                in_I += [sym_dict0[s][0]]
+                in_Q += [sym_dict0[s][1]]
+            elif const_sel == 1:
+                in_I += [sym_dict1[s][0]]
+                in_Q += [sym_dict1[s][1]]
+
     else:
         print("Mod Type not in the list: [0,1,2].\nPlease enter the correct mod type.")
         print("0 - BPSK\n1 - QPSK\n2 - 8PSK")
@@ -188,6 +190,12 @@ def rrc_imp(mod_type, sps, taps, in_IQ_file, out_IQ_file, out_IQ_gay_file, filte
     in_I = np.repeat(in_I, sps)
     in_Q = np.repeat(in_Q, sps)
     # return in_I + 1j*in_Q
+
+    with open(mod_IQ_file, 'wb') as f1:
+        temp_i = np.array(in_I, dtype=np.float32)
+        temp_q = np.array(in_Q, dtype=np.float32)
+        temp_iq = temp_i + 1j*temp_q
+        f1.write(temp_iq.tobytes())
 
     print(f"Length of I:- {in_I.size}\nLength of Q:- {in_Q.size}\n")
     # Filter n times
@@ -218,12 +226,15 @@ def rrc_imp(mod_type, sps, taps, in_IQ_file, out_IQ_file, out_IQ_gay_file, filte
 if __name__ == '__main__':
     # Constants
     file_path = r"C:\Users\Admin\Documents\gnu_sources\\"
-    out_IQ_file = file_path + 'rrc_impl_qpsk_out.bin'
+    out_IQ_file = file_path + 'rrc_impl_8psk_out.bin'
     out_IQ_gay_file = 'gayatri_bpsk.txt'
+    mod_IQ_file = file_path + 'mod_psk_iq.bin'
 
     # User Input
     in_IQ_file = file_path + input(f"Enter the input IQ file; which is at path:- {file_path}\n").strip()
     mod_type = int(input("Enter Modulation Type:\n\t0 - BPSK\n\t1 - QPSK\n\t2 - 8PSK\n").strip())
+    # const_sel = int(input("Enter Modulation Model No:\n").strip())
+    const_sel = 1
     SPS = int(input("Enter SPS (Samples per Symbol):\n").strip())
     span = int(input("Enter the span of the filter:\n").strip())
     beta = float(input("Enter the rolling factor (beta):\n").strip())
@@ -241,7 +252,7 @@ if __name__ == '__main__':
     taps = srrcDesign(SPS, span, beta)
     # taps = np.fromfile('rct_coeffs.txt', sep=' ')
     print(f"Number of rrc Taps:- {taps.size}\n")
-    out_IQ, valid_token = rrc_imp(mod_type, SPS, taps, in_IQ_file, out_IQ_file, out_IQ_gay_file, filter_times)
+    out_IQ, valid_token = rrc_imp(mod_type, const_sel, SPS, taps, in_IQ_file, out_IQ_file, out_IQ_gay_file, filter_times, mod_IQ_file)
 
     if valid_token != 0:
         # Separate I and Q

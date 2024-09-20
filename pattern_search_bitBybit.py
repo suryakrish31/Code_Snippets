@@ -74,10 +74,10 @@ def read_binary_file(file_path):
 if __name__ == '__main__':
     # Example usage:
     file_path = r"C:\Users\Admin\Documents\gnu_sinks\\"
-    # file = file_path + "consetallation_decoder_output_bpsk_map_check1.bin"
-    file = file_path + "fec_decoded_output_bpsk.bin"
+    file = file_path + "consetallation_decoder_output_8psk_B3_check.bin"
+    # file = file_path + "fec_decoded_output_bpsk.bin"
     # file_path = 'input.bin'  # Specify the path to your binary file
-    pattern = b'\x1a\xcf\xfc\x1d'  # Specify the byte pattern to search for
+    pattern = b'\xe1\xe1'  # Specify the byte pattern to search for
 
     data = read_binary_file(file)
     matches = search_pattern_bit_by_bit(data, pattern)
